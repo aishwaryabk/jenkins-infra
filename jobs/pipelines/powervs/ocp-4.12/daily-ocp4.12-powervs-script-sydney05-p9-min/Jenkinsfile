@@ -2,8 +2,10 @@
 
 pipeline {
     agent {
-        kubernetes {
-            inheritFrom 'jenkins-agent'
+        docker {
+            image 'quay.io/powercloud/inbound-agent:4.10-3.2'
+            args '-v /etc/resolv.conf:/etc/resolv.conf'
+            label 'jump-vpc-x86_64'
         }
     }
     environment {
@@ -58,6 +60,7 @@ pipeline {
                 setupClusterConfig("${CONFIG_TYPE}")
                 script {
                     env.SYSTEM_TYPE = "e980"
+		    env.INSTANCE_NAME = "rdr-aish"
                 }
             }
         }
@@ -140,21 +143,35 @@ pipeline {
                 setupKubeconfigOcp4()
             }
         }
-        stage('Setup and run ansible extra') {
+	stage('Setup and run verification tests') {
             steps {
-               setupAndRunE2e()
-            }
+                script {
+		     ansiColor('xterm') {
+                     echo ""
+		     }
+		     try {
+                          sh '''
+                              cd ${WORKSPACE}/deploy
+                              scp -o 'StrictHostKeyChecking no' -i id_rsa ${WORKSPACE}/scripts/verification.sh root@${BASTION_IP}:
+                              ssh -o 'StrictHostKeyChecking no' -i id_rsa root@${BASTION_IP} "chmod 755 verification.sh;
+                                                                                              ~/verification.sh | tee ~/verification.log 2>&1 ;
+                                                                                              exit"
+                          '''
+		     }
+		     catch(err) {
+		         sleep 360
+                         echo 'Running Verification script failed!'
+                         env.FAILED_STAGE=env.STAGE_NAME
+                         throw err
+	             }
+	        }
+	    }
         }
-        stage('Gather pprof and prometheus data') {
-            steps {
-                gatherPrometheusData()
-            }
-        }
+
     }
     post {
         always {
-            archiveAllArtifacts("deploy/conformance-parallel-out.txt.tar.gz", "deploy/summary.txt", "deploy/vars.tfvars",
-                "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz", "deploy/cron.log", "must-gather.tar.gz", "deploy/logs.tar.gz")
+            archiveAllArtifacts("deploy/vars.tfvars", "deploy/cron.log", "must-gather.tar.gz", "deploy/logs.tar.gz", "deploy/verification.log")
             cleanupOcp4Cluster()
             checkInfraError()
             processE2eResults()
