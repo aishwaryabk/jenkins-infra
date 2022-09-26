@@ -46,6 +46,7 @@ ruby --version
 echo "Cloning verification-tests repo"
 git clone https://github.com/aishwaryabk/verification-tests
 cd verification-tests
+git checkout ppc-tag
 sed -i "s/gem 'azure-storage'/#gem 'azure-storage'/g" Gemfile
 sed -i "s/gem 'azure_mgmt_storage'/#gem 'azure_mgmt_storage'/g" Gemfile
 sed -i "s/gem 'azure_mgmt_compute'/#gem 'azure_mgmt_compute'/g" Gemfile
