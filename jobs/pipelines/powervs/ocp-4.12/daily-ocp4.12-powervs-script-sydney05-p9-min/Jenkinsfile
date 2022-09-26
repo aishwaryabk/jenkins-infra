@@ -171,7 +171,7 @@ pipeline {
     }
     post {
         always {
-            archiveAllArtifacts("deploy/vars.tfvars" "deploy/logs.tar.gz", "deploy/verification.log")
+            archiveAllArtifacts("deploy/vars.tfvars", "deploy/logs.tar.gz", "deploy/verification.log")
             cleanupOcp4Cluster()
             checkInfraError()
             processE2eResults()
