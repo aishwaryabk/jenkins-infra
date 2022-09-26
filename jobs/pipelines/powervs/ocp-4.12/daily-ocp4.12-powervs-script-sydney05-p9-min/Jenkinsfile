@@ -143,6 +143,16 @@ pipeline {
                 setupKubeconfigOcp4()
             }
         }
+	stage('Setup and run ansible extra') {
+	    steps {
+	       setupAndRunE2e()
+	    }
+        }
+	stage('Gather pprof and prometheus data') {
+            steps {
+                gatherPrometheusData()
+            }
+        }
 	stage('Setup and run verification tests') {
             steps {
                 script {
@@ -171,7 +181,7 @@ pipeline {
     }
     post {
         always {
-            archiveAllArtifacts("deploy/vars.tfvars", "deploy/cron.log", "must-gather.tar.gz", "deploy/logs.tar.gz", "deploy/verification.log")
+            archiveAllArtifacts("deploy/conformance-parallel-out.txt.tar.gz", "deploy/summary.txt", "deploy/vars.tfvars", "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz", "deploy/cron.log", "must-gather.tar.gz", "deploy/logs.tar.gz", "deploy/verification.log")
             cleanupOcp4Cluster()
             checkInfraError()
             processE2eResults()

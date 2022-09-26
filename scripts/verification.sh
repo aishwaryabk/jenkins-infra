@@ -44,7 +44,7 @@ sudo yum install -y @ruby:3.0
 ruby --version
 
 echo "Cloning verification-tests repo"
-git clone https://github.com/openshift/verification-tests
+git clone https://github.com/aishwaryabk/verification-tests
 cd verification-tests
 sed -i "s/gem 'azure-storage'/#gem 'azure-storage'/g" Gemfile
 sed -i "s/gem 'azure_mgmt_storage'/#gem 'azure_mgmt_storage'/g" Gemfile
@@ -55,4 +55,4 @@ sed -i "s/BUSHSLICER_DEBUG_AFTER_FAIL=true/BUSHSLICER_DEBUG_AFTER_FAIL=false/g" 
 sudo ./tools/install_os_deps.sh
 ./tools/hack_bundle.rb
 bundle update
-bundle exec cucumber --tags @smoke
+bundle exec cucumber --tags @ppc64le
