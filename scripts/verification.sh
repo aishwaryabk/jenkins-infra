@@ -8,7 +8,7 @@ cp examples/all.yaml .
 sed -i 's/htpasswd_identity_provider: false/htpasswd_identity_provider: true/g' all.yaml
 sed -i 's/htpasswd_username: ""/htpasswd_username: "testuser"/g' all.yaml
 sed -i 's/htpasswd_password: ""/htpasswd_password: "testuser"/g' all.yaml
-#sed -i 's/htpasswd_user_role: ""/htpasswd_user_role: "cluster-admin"/g' all.yaml
+sed -i 's/htpasswd_user_role: ""/htpasswd_user_role: "self-provisioner"/g' all.yaml
 ansible-playbook  -i inventory -e @all.yaml playbooks/main.yml
 
 echo "Setting up environmental variables"
