@@ -49,11 +49,6 @@ pipeline {
 	 }
 
     stages {
-        stage('Clone ansible extra') {
-            steps {
-                cloneRepo("git@github.ibm.com:redstack-power/ocp4_ansible_extras.git", "ansible_extra")
-            }
-        }
         stage('Setup Common Environment Variables') {
             steps {
                 setupCommonEnvironmentVariables()
@@ -133,11 +128,6 @@ pipeline {
                 deployCluster()
             }
         }
-        stage('Run crontab script for capturing outputs of multiple commands') {
-            steps {
-                crontabCommandCaptureScript()
-            }
-        }
         stage('Setup Kubectl') {
             steps {
                 setupKubeconfigOcp4()
@@ -171,11 +161,9 @@ pipeline {
     }
     post {
         always {
-            archiveAllArtifacts("deploy/vars.tfvars", "deploy/logs.tar.gz", "deploy/verification.log")
+            archiveAllArtifacts("deploy/vars.tfvars", "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz", "deploy/verification.log")
             cleanupOcp4Cluster()
             checkInfraError()
-            processE2eResults()
-            dbDashboardUpdateE2e()
             cleanupPowerVSResources()
             notifyBySlack(currentBuild.result, env.MESSAGE)
             cleanWs()
