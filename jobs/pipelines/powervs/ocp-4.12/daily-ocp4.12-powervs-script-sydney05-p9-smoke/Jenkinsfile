@@ -2,8 +2,10 @@
 
 pipeline {
     agent {
-        kubernetes {
-            inheritFrom 'jenkins-agent'
+        docker {
+            image 'quay.io/powercloud/inbound-agent:4.10-3.2'
+            args '-v /etc/resolv.conf:/etc/resolv.conf'
+            label 'jump-vpc-x86_64'
         }
     }
     environment {
@@ -159,7 +161,7 @@ pipeline {
     }
     post {
         always {
-	    archiveAllArtifacts("deploy/vars.tfvars", "deploy/verification.log",
+	    archiveAllArtifacts("deploy/vars.tfvars", "deploy/verification.log", "deploy/test-result.html",
                 "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz")
             cleanupOcp4Cluster()
             checkInfraError()
