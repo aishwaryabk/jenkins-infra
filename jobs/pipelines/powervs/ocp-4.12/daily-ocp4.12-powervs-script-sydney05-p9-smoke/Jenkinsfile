@@ -161,7 +161,7 @@ pipeline {
     }
     post {
         always {
-	    archiveAllArtifacts("deploy/vars.tfvars", "deploy/verification.log", "deploy/test-result.html",
+	    archiveAllArtifacts("deploy/vars.tfvars", "deploy/verification.log", "deploy/verification-tests-report.html",
                 "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz")
             cleanupOcp4Cluster()
             checkInfraError()

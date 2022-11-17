@@ -56,4 +56,4 @@ sed -i "s/BUSHSLICER_DEBUG_AFTER_FAIL=true/BUSHSLICER_DEBUG_AFTER_FAIL=false/g" 
 sudo ./tools/install_os_deps.sh
 ./tools/hack_bundle.rb
 bundle update
-bundle exec cucumber --format html --publish --tags @ppc64le | tee test-result.html
+cucumber --tags @ppc64le --format html --out ~/verification-tests-report.html
