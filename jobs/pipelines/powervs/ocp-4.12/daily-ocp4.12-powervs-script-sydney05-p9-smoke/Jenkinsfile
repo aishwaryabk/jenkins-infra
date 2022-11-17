@@ -53,6 +53,9 @@ pipeline {
             steps {
                 setupCommonEnvironmentVariables()
                 setupClusterConfig("${CONFIG_TYPE}")
+		script {
+                    env.INSTALL_PLAYBOOK_TAG = "99d0af666cb0b88282256cfa159e452f9fdde3ae"
+                }
             }
         }
         stage('pull artifact') {
