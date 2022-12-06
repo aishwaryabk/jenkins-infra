@@ -147,7 +147,7 @@ pipeline {
                           sh '''
                               cd ${WORKSPACE}/deploy
                               scp -o 'StrictHostKeyChecking no' -i id_rsa ${WORKSPACE}/scripts/verification.sh root@${BASTION_IP}:
-                              ssh -o 'StrictHostKeyChecking no' -o 'ServerAliveInterval=60' -o 'ServerAliveCountMax=2000' -i id_rsa root@${BASTION_IP} "chmod 755 verification.sh;
+                              ssh -o 'StrictHostKeyChecking no' -o 'ServerAliveInterval=100' -o 'ServerAliveCountMax=2500' -i id_rsa root@${BASTION_IP} "chmod 755 verification.sh;
                                                                                               ~/verification.sh | tee ~/verification.log 2>&1 ;
                                                                                               exit"
                           '''
