@@ -26,7 +26,7 @@ environments:
     admin_creds_spec: /root/openstack-upi/auth/kubeconfig
     version: "4.12.0"
     #api_port: 443      # For HA clusters, both 3.x and 4.x
-    #api_port: 6443     # For non-HA 4.x clusters
+    api_port: 6443     # For non-HA 4.x clusters
     #api_port: 8443     # For non-HA 3.x clusters
     #web_console_url: https://console-openshift-console.apps.*.openshift.com
 '
