@@ -1,0 +1,214 @@
+@Library('jenkins-upstream-library') _
+
+pipeline {
+    agent {
+        docker {
+            image 'quay.io/powercloud/inbound-agent:4.10-3.2'
+            args '-v /etc/resolv.conf:/etc/resolv.conf'
+            label 'jump-vpc-x86_64'
+        }
+    }
+    environment {
+        //users and credentials. All must be defined in Jenkins Credentials
+        GITHUB_USER = credentials('GITHUB_USER')
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        OS_USERNAME = credentials('OS_USERNAME')
+        OS_PASSWORD = credentials('OS_PASSWORD')
+        DOCKER_USER = credentials('DOCKER_USER')
+        ARTIFACTORY_USER = credentials('ARTIFACTORY_USER')
+        ARTIFACTORY_TOKEN = credentials('ARTIFACTORY_TOKEN')
+        REDHAT_USERNAME = credentials('REDHAT_USERNAME')
+        REDHAT_PASSWORD = credentials('REDHAT_PASSWORD')
+        PULL_SECRET = credentials('PULL_SECRET')
+        OS_AUTH_URL=credentials('URL_SCNLPOWERCLOUD')
+
+        //Env constants
+        HARDWARE_CHOSE = "P10"
+        TERRAFORM_VER = "1.2.0"
+        AVAILABILITY_ZONE = "p8-C340F21U33"
+        OCP_RELEASE="4.10"
+        TARGET = "deploy-openshift4-powervc"
+        TEMPLATE_FILE = ".${TARGET}.tfvars.template"
+        POWERVS = false
+        SCRIPT_DEPLOYMENT = false
+        WAIT_FOR_DEBUG = "1"
+        REDHAT_RELEASE = "8.4"
+
+        //Branch
+        OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="main"//The download branch
+
+        //E2e and Scale specific variables
+	ENABLE_UI_E2E_TEST="true"
+	CONSOLE_BUILT_VERSION="410-20220207"
+	CONSOLE_IMAGE_VERSION="v22.10.12"
+        ENABLE_E2E_TEST="false"
+        ENABLE_SCALE_TEST="false"
+        GOLANG_TARBALL="https://dl.google.com/go/go1.17.6.linux-ppc64le.tar.gz"
+
+        // Type of configuration
+        CONFIG_TYPE="min"
+	 }
+
+    stages {
+        stage('Clone ansible extra') {
+            steps {
+                cloneRepo("https://github.com/ocp-power-automation/ocp4-playbooks-extras", "ocp4-playbooks-extras", "*/main")
+            }
+        }
+        stage('Setup Common Environment Variables') {
+            steps {
+                setupCommonEnvironmentVariables()
+                setupClusterConfig("${CONFIG_TYPE}")
+		script{
+		    env.OS_TENANT_NAME="icp-test"
+                    env.OS_NETWORK = "workload"
+                    env.OS_PRIVATE_NETWORK = "workload"
+                    env.SCG_ID = "4366c1e2-bb4f-4c3d-98a2-06cc39bbc58d"
+		}
+            }
+        }
+        stage('pull artifact') {
+            steps {
+                script {
+                    getArtifacts("mirror-openshift-release", "latest-${OCP_RELEASE}-build.txt")
+		    getArtifacts("powervm/poll-powervc-images", "rhcos-${OCP_RELEASE}-powercloud-latest.txt")
+		    getArtifacts("powervm/poll-powervc-images", "rhel-${REDHAT_RELEASE}-powercloud-latest.txt")
+                }
+            }
+        }
+        //Checkout the installer git repo
+        stage('Prepare Terraform Template') {
+            steps {
+                script {
+                    ansiColor('xterm') {
+                        echo ""
+                    }
+                    try
+                    {
+                        gbToMb()
+                        pullSecret()
+                        env.OPENSHIFT_IMAGE = ""
+                        if (fileExists("deploy/artifactory/latest-${OCP_RELEASE}-build.txt")) {
+                            env.OPENSHIFT_IMAGE = readFile "deploy/artifactory/latest-${OCP_RELEASE}-build.txt"
+                            env.OPENSHIFT_IMAGE = env.OPENSHIFT_IMAGE.trim()
+                            env.OCP_RELEASE_TAG = env.OPENSHIFT_IMAGE.split(":")[1].trim()
+                        }
+                        else {
+                            echo "latest-${OCP_RELEASE}-build.txt file does not exist. Please check mirror-openshift-release job"
+                            throw err
+                        }
+			if (fileExists("deploy/artifactory/rhcos-${OCP_RELEASE}-powercloud-latest.txt")) {
++                           env.RHCOS_IMAGE = readFile "deploy/artifactory/rhcos-${OCP_RELEASE}-powercloud-latest.txt"
+                            env.RHCOS_IMAGE_NAME = env.RHCOS_IMAGE.split()[0].trim()
+                            env.RHCOS_IMAGE_ID = env.RHCOS_IMAGE.split()[1].trim()
+                        }
+                        else {
+                            echo "cicd-rhcos-${OCP_RELEASE}.latest.txt file does not exist. Please check poll-powervc-images job"
+                            throw err
+                        }
+			if (fileExists("deploy/artifactory/rhel-${REDHAT_RELEASE}-powercloud-latest.txt")) {
++                           env.BASTION_IMAGE = readFile "deploy/artifactory/rhel-${REDHAT_RELEASE}-powercloud-latest.txt"
+                            env.BASTION_IMAGE_NAME = env.BASTION_IMAGE.split()[0].trim()
+                            env.BASTION_IMAGE_ID = env.BASTION_IMAGE.split()[1].trim()
+                        }
+                        else {
+                            echo "cicd-rhel-${REDHAT_RELEASE}.latest.txt file does not exist. Please check poll-powervc-images job"
+                            throw err
+                        }
+                        if (env.DEPLOY_MASTER == "false")
+                        {
+                            echo "Cluster cant deploy without master"
+                            throw err
+                        }
+
+                        createTemplate(env.OS_AUTH_URL, env.MASTER_VCPUS , "${MASTER_MEMORY_MB}", env.MASTER_PROCESSORS, env.MASTER_TEMPLATE)
+                        createTemplate(env.OS_AUTH_URL, env.WORKER_VCPUS , "${WORKER_MEMORY_MB}", env.WORKER_PROCESSORS, env.WORKER_TEMPLATE)
+                        createTemplate(env.OS_AUTH_URL, env.BASTION_VCPUS , "${BASTION_MEMORY_MB}", env.BASTION_PROCESSORS, env.BASTION_TEMPLATE)
+                        createTemplate(env.OS_AUTH_URL, env.BOOTSTRAP_VCPUS , "${BOOTSTRAP_MEMORY_MB}", env.BOOTSTRAP_PROCESSORS, env.BOOTSTRAP_TEMPLATE)
+                    }
+                    catch (err)
+                    {
+                        echo 'Error ! Template preparation failed !'
+                        env.FAILED_STAGE=env.STAGE_NAME
+                        throw err
+                    }
+                }
+            }
+        }
+        stage('Initialize Environment') {
+            steps {
+                initializeEnvironment()
+            }
+        }
+        stage('Setup Terraform Plugin') {
+            steps {
+                setupTerraformPlugin()
+            }
+        }
+        stage('Deploy OCP Cluster') {
+            steps {
+                deployCluster()
+            }
+        }
+        stage('Setup Kubectl') {
+            steps {
+                setupKubeconfigOcp4()
+            }
+        }
+        stage('Setup and run UI E2E Tests') {
+            steps {
+	       //setupAndRunUiE2e()
+	       script {
+                     ansiColor('xterm') {
+                     echo ""
+                     }
+                     try {
+                          sh '''
+			      echo 'UI E2E Tests'
+			      cd ${WORKSPACE}/deploy
+			      if [[ $(systemctl is-active docker) == "inactive" ]]; then
+			        sudo systemctl daemon-reload
+				sudo systemctl start docker
+			      fi
+			      wget http://pokgsa.ibm.com/gsa/pokgsa/home/h/r/hrmymt/web/public/console-built-${CONSOLE_BUILT_VERSION}.tgz
+			      mv console-built-${CONSOLE_BUILT_VERSION}.tgz console-built.tgz
+			      scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/openstack-upi/auth/kubeadmin-password .
+			      kube_password=$(cat kubeadmin-password)
+			      oc_server_url=$(make $TARGET:output TERRAFORM_OUTPUT_VAR=oc_server_url)
+			      cat > input.json << EOF {
+				     "apiurl": "${oc_server_url}",
+				     "password": "${kube_password}",
+				     "driver": "",
+				     "suite": "e2e",
+				     "browser": "firefox",
+				     "jtimeout": 240000,
+				     "failfast": "no" }
+			  '''
+		     }
+		     catch(err) {
+		         echo 'Error ! UI e2e tests failed!'
+			 env.FAILED_STAGE=env.STAGE_NAME
+			 throw err
+                     }
+	       }
+
+            }
+        }
+        stage('Gather pprof and prometheus data') {
+            steps {
+                //gatherPrometheusData()
+                echo "gatherPrometheusData() is skipped for now"
+            }
+        }
+    }
+    post {
+        always {
+            archiveAllArtifacts("deploy/vars.tfvars", "deploy/ui-e2e-output.txt",
+	        "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz")
+            cleanupOcp4Cluster()
+            checkInfraError()
+            notifyBySlack(currentBuild.result, env.MESSAGE)
+            cleanWs()
+        }
+    }
+}
