@@ -98,7 +98,7 @@ pipeline {
                             throw err
                         }
 			if (fileExists("deploy/artifactory/rhcos-${OCP_RELEASE}-powercloud-latest.txt")) {
-+                           env.RHCOS_IMAGE = readFile "deploy/artifactory/rhcos-${OCP_RELEASE}-powercloud-latest.txt"
+                            env.RHCOS_IMAGE = readFile "deploy/artifactory/rhcos-${OCP_RELEASE}-powercloud-latest.txt"
                             env.RHCOS_IMAGE_NAME = env.RHCOS_IMAGE.split()[0].trim()
                             env.RHCOS_IMAGE_ID = env.RHCOS_IMAGE.split()[1].trim()
                         }
@@ -107,7 +107,7 @@ pipeline {
                             throw err
                         }
 			if (fileExists("deploy/artifactory/rhel-${REDHAT_RELEASE}-powercloud-latest.txt")) {
-+                           env.BASTION_IMAGE = readFile "deploy/artifactory/rhel-${REDHAT_RELEASE}-powercloud-latest.txt"
+                            env.BASTION_IMAGE = readFile "deploy/artifactory/rhel-${REDHAT_RELEASE}-powercloud-latest.txt"
                             env.BASTION_IMAGE_NAME = env.BASTION_IMAGE.split()[0].trim()
                             env.BASTION_IMAGE_ID = env.BASTION_IMAGE.split()[1].trim()
                         }
