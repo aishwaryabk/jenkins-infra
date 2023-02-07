@@ -186,6 +186,7 @@ pipeline {
 				     "failfast": "no" 
 				     }
 			      EOF
+			      ls -lah
 			      docker run -it --name UiE2e --net host --shm-size 3g -v $PWD:/host quay.io/miyamoto_h/ocp-console-e2e:${CONSOLE_IMAGE_VERSION} sh -c "cd / && ./console-e2e.sh | tee ui-e2e-output.txt"
 			      docker cp UiE2e:/ui-e2e-output.txt .
 
