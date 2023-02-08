@@ -61,8 +61,8 @@ pipeline {
                 setupClusterConfig("${CONFIG_TYPE}")
 		script{
 		    env.OS_TENANT_NAME="icp-test"
-                    env.OS_NETWORK = "workload"
-                    env.OS_PRIVATE_NETWORK = "workload"
+                    env.OS_NETWORK = "icp_network2"
+                    env.OS_PRIVATE_NETWORK = "icp_network2"
                     env.SCG_ID = "4366c1e2-bb4f-4c3d-98a2-06cc39bbc58d"
 		}
             }
