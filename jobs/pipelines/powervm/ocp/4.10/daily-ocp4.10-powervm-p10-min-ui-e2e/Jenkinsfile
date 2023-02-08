@@ -25,7 +25,7 @@ pipeline {
         //Env constants
         HARDWARE_CHOSE = "P10"
         TERRAFORM_VER = "1.2.0"
-        AVAILABILITY_ZONE = "workload"
+        AVAILABILITY_ZONE = "p8_pvm"
         OCP_RELEASE="4.10"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
@@ -61,8 +61,8 @@ pipeline {
                 setupClusterConfig("${CONFIG_TYPE}")
 		script{
 		    env.OS_TENANT_NAME="icp-test"
-                    env.OS_NETWORK = "icp_network2"
-                    env.OS_PRIVATE_NETWORK = "icp_network2"
+                    env.OS_NETWORK = "workload"
+                    env.OS_PRIVATE_NETWORK = "workload"
                     env.SCG_ID = "4366c1e2-bb4f-4c3d-98a2-06cc39bbc58d"
 		}
             }
