@@ -26,24 +26,24 @@ pipeline {
         HARDWARE_CHOSE = "P10"
         TERRAFORM_VER = "1.2.0"
         AVAILABILITY_ZONE = "p8-new"
-        OCP_RELEASE="4.10"
+        OCP_RELEASE="4.12"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
         POWERVS = false
         SCRIPT_DEPLOYMENT = false
         WAIT_FOR_DEBUG = "1"
-        REDHAT_RELEASE = "8.4"
+        REDHAT_RELEASE = "8.6"
 
         //Branch
         OPENSHIFT_POWERVC_GIT_TF_DEPLOY_BRANCH="main"//The download branch
 
         //E2e and Scale specific variables
 	ENABLE_UI_E2E_TEST="true"
-	CONSOLE_BUILT_VERSION="410-20220207"
+	CONSOLE_BUILT_VERSION="412-20221011"
 	CONSOLE_IMAGE_VERSION="v22.10.12"
         ENABLE_E2E_TEST="false"
         ENABLE_SCALE_TEST="false"
-        GOLANG_TARBALL="https://dl.google.com/go/go1.17.6.linux-ppc64le.tar.gz"
+	GOLANG_TARBALL="https://dl.google.com/go/go1.18.6.linux-ppc64le.tar.gz"
 
         // Type of configuration
         CONFIG_TYPE="min"
