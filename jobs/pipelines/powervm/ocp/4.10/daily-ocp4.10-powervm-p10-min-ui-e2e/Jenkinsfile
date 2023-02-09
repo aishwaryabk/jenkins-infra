@@ -60,6 +60,7 @@ pipeline {
                 setupCommonEnvironmentVariables()
                 setupClusterConfig("${CONFIG_TYPE}")
 		script{
+		    env.INSTANCE_NAME = "rdr-aish"
 		    env.OS_TENANT_NAME="icp-test"
                     env.OS_NETWORK = "workload"
                     env.OS_PRIVATE_NETWORK = "workload"
