@@ -176,6 +176,7 @@ pipeline {
 			      scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/openstack-upi/auth/kubeadmin-password .
 			      kube_password=$(cat kubeadmin-password)
 			      oc_server_url=$(make $TARGET:output TERRAFORM_OUTPUT_VAR=oc_server_url)
+			      echo "${oc_server_url}"
 			      cat > input.json << EOF
 			             {
 				     "apiurl": "${oc_server_url}",
@@ -211,6 +212,7 @@ pipeline {
     }
     post {
         always {
+	    script { sleep 3600 }
             archiveAllArtifacts("deploy/vars.tfvars", "deploy/ui-e2e-output.txt",
 	        "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz")
             cleanupOcp4Cluster()
