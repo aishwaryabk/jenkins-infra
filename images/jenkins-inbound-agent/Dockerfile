@@ -1,6 +1,6 @@
 FROM jenkins/inbound-agent:4.10-3
 USER root
-RUN  yum install curl gnupg2 --yes \
+RUN  apt-get update && apt install curl gnupg2 --yes \
         python3 \
         python3-pip \
         make \
