@@ -25,7 +25,7 @@ pipeline {
         //Env constants
         HARDWARE_CHOSE = "P10"
         TERRAFORM_VER = "1.2.0"
-        AVAILABILITY_ZONE = "dual_vscsi"
+        AVAILABILITY_ZONE = "p8_pvm"
         OCP_RELEASE="4.12"
         TARGET = "deploy-openshift4-powervc"
         TEMPLATE_FILE = ".${TARGET}.tfvars.template"
@@ -175,22 +175,22 @@ pipeline {
 			      mv console-built-${CONSOLE_BUILT_VERSION}.tgz console-built.tgz
 			      scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/openstack-upi/auth/kubeadmin-password .
 			      kube_password=$(cat kubeadmin-password)
-			      oc_server_url=$(make $TARGET:output TERRAFORM_OUTPUT_VAR=oc_server_url)
+			      oc_server_url=$(make $TARGET:output TERRAFORM_OUTPUT_VAR=oc_server_url|sed 's/"//g')
 			      echo "${oc_server_url}"
-			      cat > input.json << EOF
-			             {
-				     "apiurl": "${oc_server_url}",
-				     "password": "${kube_password}",
-				     "driver": "",
-				     "suite": "e2e",
-				     "browser": "firefox",
-				     "jtimeout": 240000,
-				     "failfast": "no" 
-				     }
-			      EOF
+                  cat > input.json << EOF
+{
+"apiurl": "${oc_server_url}",
+"password": "${kube_password}",
+"driver": "",
+"suite": "e2e",
+"browser": "firefox",
+"jtimeout": 240000,
+"failfast": "no"
+}
+EOF
 			      ls -lah
-			      docker run -it --name UiE2e --net host --shm-size 3g -v $PWD:/host quay.io/miyamoto_h/ocp-console-e2e:${CONSOLE_IMAGE_VERSION} sh -c "cd / && ./console-e2e.sh | tee ui-e2e-output.txt"
-			      docker cp UiE2e:/ui-e2e-output.txt .
+			      cd /
+			      ./console-e2e.sh | tee ui-e2e-output.txt
 
 			  '''
 		     }
@@ -217,8 +217,9 @@ pipeline {
 	        "cpu-pre.pprof", "heap-pre.pprof", "prometheus.tar.gz")
             cleanupOcp4Cluster()
             checkInfraError()
-            notifyBySlack(currentBuild.result, env.MESSAGE)
+          //  notifyBySlack(currentBuild.result, env.MESSAGE)
             cleanWs()
         }
     }
 }
+

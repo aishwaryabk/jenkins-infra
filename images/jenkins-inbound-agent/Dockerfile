@@ -1,6 +1,6 @@
-FROM jenkins/inbound-agent:4.10-3
+FROM quay.io/miyamoto_h/ocp-console-e2e:v22.10.12
 USER root
-RUN apt-get update && apt install curl gnupg2 --yes \
+RUN  yum install curl gnupg2 --yes \
         python3 \
         python3-pip \
         make \
