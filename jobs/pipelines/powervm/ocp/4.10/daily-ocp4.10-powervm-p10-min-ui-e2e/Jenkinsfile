@@ -172,12 +172,12 @@ pipeline {
 				sudo systemctl start docker
 			      fi
 			      wget http://pokgsa.ibm.com/gsa/pokgsa/home/h/r/hrmymt/web/public/console-built-${CONSOLE_BUILT_VERSION}.tgz
-			      mv console-built-${CONSOLE_BUILT_VERSION}.tgz console-built.tgz
+			      mv console-built-${CONSOLE_BUILT_VERSION}.tgz /host/console-built.tgz
 			      scp -i id_rsa -o StrictHostKeyChecking=no root@${BASTION_IP}:~/openstack-upi/auth/kubeadmin-password .
 			      kube_password=$(cat kubeadmin-password)
 			      oc_server_url=$(make $TARGET:output TERRAFORM_OUTPUT_VAR=oc_server_url|sed 's/"//g')
 			      echo "${oc_server_url}"
-                  cat > input.json << EOF
+                  cat > /host/input.json << EOF
 {
 "apiurl": "${oc_server_url}",
 "password": "${kube_password}",
@@ -188,7 +188,6 @@ pipeline {
 "failfast": "no"
 }
 EOF
-			      ls -lah
 			      cd /
 			      ./console-e2e.sh | tee ui-e2e-output.txt
 
